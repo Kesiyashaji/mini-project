@@ -8,6 +8,8 @@ lib/
 share/
 Include/
 
+/data
+
 #Python Caches
 
 pycache/    

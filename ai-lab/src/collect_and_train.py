@@ -36,15 +36,29 @@ MODEL_OUTPUT = Path(__file__).parent.parent.parent / "web-app" / "public" / "mod
 
 
 def normalize_landmarks(landmarks) -> list:
-    """Normalize 21 landmarks relative to wrist (index 0), return 63 floats."""
+    """Normalize 21 landmarks relative to wrist (index 0) and scaled to max distance, return 63 floats."""
     wrist = landmarks[0]
-    result = []
+    
+    # 1. Translate relative to wrist
+    relative_coords = []
     for lm in landmarks:
-        result.extend([
-            lm.x - wrist.x,
-            lm.y - wrist.y,
-            lm.z - wrist.z,
-        ])
+        relative_coords.append((lm.x - wrist.x, lm.y - wrist.y, lm.z - wrist.z))
+
+    # 2. Find max distance
+    max_dist = 0.0
+    for cx, cy, cz in relative_coords:
+        dist = (cx*cx + cy*cy + cz*cz) ** 0.5
+        if dist > max_dist:
+            max_dist = dist
+    
+    if max_dist < 1e-6:
+        max_dist = 1.0
+
+    # 3. Flaten and scale
+    result = []
+    for cx, cy, cz in relative_coords:
+        result.extend([cx / max_dist, cy / max_dist, cz / max_dist])
+        
     return result
 
 

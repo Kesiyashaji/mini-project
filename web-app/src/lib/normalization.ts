@@ -17,10 +17,16 @@ export const normalizeLandmarks = (landmarks: Landmark[]): number[] => {
 		z: lm.z - wrist.z,
 	}));
 
-	// 3. Flatten to 1D array [x0, y0, z0, x1, y1, z1, ...]
+	// 3. Scale normalization — divide by wrist-to-middle-MCP distance
+	//    Must match training code: scale = dist(wrist, landmark[9])
+	const mcp = relativeLandmarks[9]; // middle finger MCP
+	let scale = Math.sqrt(mcp.x * mcp.x + mcp.y * mcp.y + mcp.z * mcp.z);
+	if (scale < 1e-6) scale = 1.0;
+
+	// 4. Flatten to 1D array [x0, y0, z0, x1, y1, z1, ...]
 	const flattened: number[] = [];
 	relativeLandmarks.forEach((lm) => {
-		flattened.push(lm.x, lm.y, lm.z);
+		flattened.push(lm.x / scale, lm.y / scale, lm.z / scale);
 	});
 
 	return flattened;

@@ -19,22 +19,37 @@ const SignStream = dynamic(
 
 export default function Home() {
 	const [currentResult, setCurrentResult] = useState<string>("");
+	const [livePrediction, setLivePrediction] = useState<string>("");
 	const [sentence, setSentence] = useState<string>("");
 	const [isStreaming, setIsStreaming] = useState<boolean>(true);
 
 	const handlePrediction = useCallback((char: string) => {
 		setCurrentResult(char);
-		// Basic sentence construction logic
+
 		setSentence((prev) => {
-			// If char is Space (mapped via gesture or button, but here assuming char is letter)
-			// If char is same as last char, maybe debounce? unique?
-			// Simple append for now
-			if (char === "SPACE") return prev + " ";
-			// Avoid repeating precise same char immediately if needed?
-			// But for "HELLO", we need L L.
-			// Usually handled by "pose hold" vs "re-entry".
-			return prev + char;
+			const prevWords = prev.trim().split(" ");
+			const lastWord = prevWords[prevWords.length - 1];
+
+			// Duplicate prevention: avoid spamming the exact same word
+			if (char.toLowerCase() === lastWord?.toLowerCase()) {
+				return prev;
+			}
+
+			// TTS logic for the new word
+			if ("speechSynthesis" in window) {
+				const utterance = new SpeechSynthesisUtterance(char);
+				utterance.volume = 1;
+				utterance.rate = 1.05;
+				window.speechSynthesis.speak(utterance);
+			}
+
+			// Add a space to separate sequence words
+			return prev ? `${prev} ${char}` : char;
 		});
+	}, []);
+
+	const handleLivePrediction = useCallback((sign: string) => {
+		setLivePrediction(sign);
 	}, []);
 
 	const handleClear = () => {
@@ -54,18 +69,21 @@ export default function Home() {
 	};
 
 	return (
-		<main className="flex min-h-screen flex-col items-center justify-between p-8 bg-black text-white">
+		<main className="flex min-h-screen flex-col items-center justify-between p-8 bg-gradient-to-br from-[#0B0D17] via-[#10142A] to-[#160D22] text-white">
 			<div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex mb-8">
-				<p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-					SignStream Live &nbsp;
-					<code className="font-bold">v1.1.0</code>
+				<p className="fixed left-0 top-0 flex w-full justify-center border-b border-purple-500/20 bg-black/40 pb-6 pt-8 backdrop-blur-3xl shadow-[0_0_20px_rgba(139,92,246,0.1)] lg:static lg:w-auto lg:rounded-2xl lg:border lg:p-4">
+					<span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 font-bold tracking-widest uppercase">
+						SignStream Live
+					</span>
+					&nbsp;
+					<code className="font-bold text-slate-400">v1.2.0</code>
 				</p>
 			</div>
 
 			<div className="relative flex flex-col items-center w-full max-w-5xl">
-				<SignStream onPrediction={handlePrediction} isStreaming={isStreaming} />
+				<SignStream onPrediction={handlePrediction} onLivePrediction={handleLivePrediction} isStreaming={isStreaming} />
 
-				<PredictionDisplay currentResult={currentResult} sentence={sentence} />
+				<PredictionDisplay currentResult={currentResult} livePrediction={livePrediction} sentence={sentence} />
 
 				<ControlPanel
 					onClear={handleClear}

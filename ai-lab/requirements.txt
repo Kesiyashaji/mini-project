@@ -1,8 +1,10 @@
- mediapipe 
- opencv-python 
- pandas 
- numpy 
- scikit-learn 
- xgboost 
- onnxmltools 
- skl2onnx
+mediapipe
+opencv-python
+pandas
+numpy
+scikit-learn
+xgboost
+onnxmltools
+skl2onnx
+torch
+onnx
